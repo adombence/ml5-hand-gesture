@@ -1,6 +1,7 @@
 let video;
 let handPose;
 let hands = [];
+let connections = [];
 
 function preload() {
   handPose = ml5.handPose({ flipped: true });
@@ -19,24 +20,45 @@ function setup() {
   video = createCapture(VIDEO, { flipped: true });
   video.hide();
   handPose.detectStart(video, gotHands);
+  connections = handPose.getConnections();
 }
 
 function draw() {
-  image(video, 0, 0);
-  if (hands.length > 0) {
-    for (let hand of hands) {
-      if (hand.confidence > 0.1) {
-        for (let i = 0; i < hand.keypoints.length; i++) {
-          let keypoint = hand.keypoints[i];
-          if (hand.handedness == "Left") {
-            fill(255, 0, 255);
-          } else {
-            fill(255, 255, 0);
-          }
-          noStroke();
-          circle(keypoint.x, keypoint.y, 16);
-        }
+  // Draw the webcam video
+  image(video, 0, 0, width, height);
+
+  // Draw the skeletal connections
+  for (let hand of hands) {
+    for (let connection of connections) {
+      let pointAIndex = connection[0];
+      let pointBIndex = connection[1];
+      let pointA = hand.keypoints[pointAIndex];
+      let pointB = hand.keypoints[pointBIndex];
+
+      if (hand.handedness == "Left") {
+        stroke(96, 187, 226);
+      } else {
+        stroke(236, 94, 79);
       }
+      strokeWeight(2);
+      line(pointA.x, pointA.y, pointB.x, pointB.y);
     }
+  }
+
+  // Draw all the tracked hand points
+  for (let hand of hands) {
+    for (let keypoint of hand.keypoints) {
+      fillHand(hand);
+      noStroke();
+      circle(keypoint.x, keypoint.y, 10);
+    }
+  }
+}
+
+function fillHand(hand) {
+  if (hand.handedness == "Left") {
+    fill(255, 0, 255);
+  } else {
+    fill(255, 255, 0);
   }
 }
